@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.c": "c",
+        "*.h": "c"
+    },
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "C_Cpp.default.includePath": ["${workspaceFolder}/**"],
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.clang_format_style": "{ BasedOnStyle: LLVM, UseTab: Never, IndentWidth: 4, TabWidth: 4, BreakBeforeBraces: Attach, AllowShortIfStatementsOnASingleLine: false, IndentCaseLabels: false, ColumnLimit: 0, AccessModifierOffset: -4 }"
+}
