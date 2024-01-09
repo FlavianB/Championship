@@ -22,7 +22,7 @@ void db_create(sqlite3 *db) {
     sqlite3_exec(db, sql, NULL, NULL, NULL);
 
     sprintf(sql, "DROP TABLE IF EXISTS Tournaments;"
-                 "CREATE TABLE Tournaments(t_id INT PRIMARY KEY, admin_id INT, name VARCHAR2, start_date DATETIME, game VARCHAR2, no_players_max INT, no_players_actual INT, structure INT, FOREIGN KEY (admin_id) REFERENCES Users (u_id), CHECK (no_players_max >= no_players_actual));");
+                 "CREATE TABLE Tournaments(t_id INT PRIMARY KEY, admin_id INT, name VARCHAR2, start_date DATETIME, game VARCHAR2, no_players_max INT, no_players_actual INT, structure INT, winner VARCHAR2, FOREIGN KEY (admin_id) REFERENCES Users (u_id), CHECK (no_players_max >= no_players_actual));");
     sqlite3_exec(db, sql, NULL, NULL, NULL);
 
     sprintf(sql, "DROP TABLE IF EXISTS Matches;");

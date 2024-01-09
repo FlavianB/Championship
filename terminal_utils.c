@@ -32,7 +32,7 @@ void terminal_unalter() {
     }
 }
 
-void star_get(char *buf, size_t size) {
+void star_put(char *buf, size_t size) {
     char c = '\0';
     int count = 0;
     while (--size > 0 && (c = getchar()) != '\n') {
@@ -54,7 +54,7 @@ void star_get(char *buf, size_t size) {
 
 void welcome_prompt() {
     printf("Welcome to...\n\n");
-    printf("\033[1;35m");
+    printf("\033[1;5;35m");
     printf("                                                                              \n"
            "   _____  _                               _                     _      _        \n"
            "  / ____|| |                             (_)                   | |    (_)       \n"

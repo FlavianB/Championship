@@ -31,6 +31,18 @@ void show_matches();
 void show_history();
 void postpone();
 void exit_application();
+void simulate_tournament();
+
+int check_power(int x) {
+    if (x == 0)
+        return 0;
+    while (x != 1) {
+        if (x % 2 != 0)
+            return 0;
+        x /= 2;
+    }
+    return 1;
+}
 
 int send_fmt_log(char *username, char *password) {
     char req_fmt[1000];
@@ -157,13 +169,13 @@ void register_account() {
     terminal_alter();
     printf("Password: ");
     fflush(stdout);
-    star_get(password, 256);
+    star_put(password, 256);
     printf("\n");
     terminal_unalter();
     terminal_alter();
     printf("Repeat password: ");
     fflush(stdout);
-    star_get(r_password, 256);
+    star_put(r_password, 256);
     printf("\n");
     terminal_unalter();
 
@@ -174,13 +186,13 @@ void register_account() {
         terminal_alter();
         printf("Password: ");
         fflush(stdout);
-        star_get(password, 256);
+        star_put(password, 256);
         printf("\n");
         terminal_unalter();
         terminal_alter();
         printf("Repeat password: ");
         fflush(stdout);
-        star_get(r_password, 256);
+        star_put(r_password, 256);
         printf("\n");
         terminal_unalter();
     }
@@ -203,7 +215,7 @@ void register_account() {
         log_prompt();
     } else {
         logged_flag = 0;
-        printf("Succesful register!\nPlease log in. \n");
+        printf("Succesful register!\nPlease log in. \n\n");
     }
 
     login_account();
@@ -223,7 +235,7 @@ void login_account() {
         terminal_alter();
         printf("Password: ");
         fflush(stdout);
-        star_get(password, 256);
+        star_put(password, 256);
         printf("\n");
         terminal_unalter();
 
@@ -278,6 +290,11 @@ void create_tournament() {
     scanf("%[^\n]%*c", tournament_game);
     printf("Tournament's number of players (the number must be a power of 2!): ");
     scanf("%[^\n]%*c", tournament_no_players);
+    while (check_power(atoi(tournament_no_players)) != 1 || atoi(tournament_no_players) < 2) {
+        printf("checked\n");
+        printf("Invalid number of players. The number must be a power of 2! \n Please try again: \n");
+        scanf("%[^\n]%*c", tournament_no_players);
+    }
     printf("Tournament's type: \n 1 - Single elimination -> Once a participant looses, he is out of the tournament! \n 2 - Double elimination -> Participants can loose a match once.\n");
     scanf("%[^\n]%*c", choice_string);
 
@@ -509,7 +526,64 @@ void show_matches() {
 }
 
 void show_history() {
-    int response = send_fmt_shh();
+    int response;
+    send_fmt_shh();
+
+    if (read(fd_server, &response, sizeof(response)) < 0) {
+        perror("[CLIENT] Error at receiving the response from server.\n");
+        exit(1);
+    }
+
+    if (response == 1) {
+        printf("You are not the admin of any tournament! \n");
+        return;
+    }
+
+    int no_tournaments = 0;
+    if (read(fd_server, &no_tournaments, sizeof(no_tournaments)) < 0) {
+        perror("[CLIENT] Error at receiving the response from server.\n");
+        exit(1);
+    }
+
+    printf("Currently you are the admin of %d tournaments: \n", no_tournaments);
+
+    for (int i = 0; i < no_tournaments; i++) {
+        char tournament_name[256], winner_name[256];
+
+        int pos = 0;
+
+        char c = 0;
+
+        while (c != '\n') {
+            if (read(fd_server, &c, 1) == -1) {
+                perror("[CLIENt]Error at reading from specified client fd.\n");
+                exit(1);
+            }
+
+            if (c != '\n')
+                tournament_name[pos++] = c;
+        }
+
+        tournament_name[pos] = '\0';
+
+        pos = 0;
+
+        c = 0;
+
+        while (c != '\n') {
+            if (read(fd_server, &c, 1) == -1) {
+                perror("[CLIENt]Error at reading from specified client fd.\n");
+                exit(1);
+            }
+
+            if (c != '\n')
+                winner_name[pos++] = c;
+        }
+
+        winner_name[pos] = '\0';
+
+        printf("%d. Tournament name: %s --- Winner: %s\n", i + 1, tournament_name, winner_name);
+    }
 }
 
 void postpone() {
@@ -533,6 +607,38 @@ void postpone() {
         return;
     } else {
         printf("Something went wrong! \n");
+        return;
+    }
+}
+
+void simulate_tournament() {
+    int response = 0;
+    char tournament_name[256];
+
+    printf("Please enter the name of the tournament you want to simulate: ");
+    scanf("%[^\n]%*c", tournament_name);
+
+    char req_fmt[1000];
+    sprintf(req_fmt, "SIM_%s\n", tournament_name);
+
+    if (write(fd_server, req_fmt, strlen(req_fmt)) == -1) {
+        perror("Server: Error at writing to specified fd.");
+        exit(1);
+    }
+
+    if (read(fd_server, &response, sizeof(response)) < 0) {
+        perror("[CLIENT] Error at receiving the response from server.\n");
+        exit(1);
+    }
+
+    if (response == 0) {
+        printf("Tournament with name %s was simulated! \n", tournament_name);
+        return;
+    } else if (response == 1) {
+        printf("Tournament with name %s does not exist! \n", tournament_name);
+        return;
+    } else if (response == 2) {
+        printf("You are not the admin of this tournament! \n");
         return;
     }
 }
@@ -579,8 +685,7 @@ void log_prompt() {
 void command_prompt() {
     int choice;
     char choice_string[256];
-
-    printf("\nPlease choose one of the following actions. \n 1 - Create Tournament \n 2 - Join Tournament \n 3 - Show available tournaments \n 4 - Show my matches \n 5 - Show history of my tournaments \n 6 - Postpone one of my matches \n 7 - Exit the application \n");
+    printf("\nPlease choose one of the following actions. \n 1 - Create Tournament \n 2 - Join Tournament \n 3 - Show available tournaments \n 4 - Show my matches \n 5 - Show history of my tournaments \n 6 - Postpone one of my matches \n 7 - Exit the application \n 777 - Simulate tournament \n");
     scanf("%[^\n]%*c", choice_string);
     choice = atoi(choice_string);
 
@@ -612,6 +717,10 @@ void command_prompt() {
     case 7:
         printf("Exiting the application... \n");
         exit_application();
+        break;
+    case 777:
+        printf("Simulating tournament... \n");
+        simulate_tournament();
         break;
     default:
         printf("Invalid choice. \n");

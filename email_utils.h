@@ -4,6 +4,7 @@
 #define FROM_ADDR "admin@champ-manager.com"
 #define FROM_MAIL "Championship Manager <" FROM_ADDR ">"
 
-int send_email(char *to, char *subject, char *body);
+// Sends an email to the specified address.
+int send_email(const char *to, const char *subject, const char *body);
 
 #endif

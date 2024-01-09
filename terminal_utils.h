@@ -7,9 +7,13 @@
 #include <termios.h>
 #include <unistd.h>
 
+// Set terminal to non-canonical mode
 void terminal_alter();
+// Set terminal to canonical mode
 void terminal_unalter();
-void star_get(char *, size_t);
+// Print * instead of characters for password input
+void star_put(char *, size_t);
+// Print welcome message
 void welcome_prompt();
 
 #endif
